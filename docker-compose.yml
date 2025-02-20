@@ -1,0 +1,11 @@
+version: '3'
+
+services:
+  orc_server_hangover:
+    build: .
+    user: 1001:1001
+    working_dir: /home/user/orc_server
+    environment:
+      - HODLL=xtajit.dll
+    network_mode: "host"
+    command: wine orc_server.exe -sv 2345
