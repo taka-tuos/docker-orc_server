@@ -1,0 +1,179 @@
+_player_arm_list={}
+_player_com_list={}
+_player_cht_list={}
+_player_col_list={}
+
+_player_list_string="<tr><td>%02d<font color=\"#%06x\">%s</font>%s</td><td>%s</td><td>%s</td></tr>\n"
+
+_chat_log={}
+
+_chat_log_string="<tr><td>%d月%d日</td><td>%s</td><td><font color=\"#%06x\">%s</font>%s</td><td>%s</td></tr>\n"
+
+
+function OnChat()
+	local i
+	
+	--<chat_list>
+	
+	------<arms_list>
+	for i=0,_PLAYERS()-1 do
+		_player_arm_list[_PLAYERNAME(i)]="●"
+		if _PLAYERARMS(i) ~= 0 then _player_arm_list[_PLAYERNAME(i)]="■" end
+		_player_col_list[_PLAYERNAME(i)]=_PLAYERCOLOR(i)
+	end
+	------</arms_list>
+	
+	local s = _CHAT()
+	
+	local mon,day,tim,nam,cht = _split_chatstring(s)
+	
+	cht = _xss_disable(cht)
+	
+	if string.byte(cht,1) == string.byte('$',1) then
+		if string.byte(cht,2) == string.byte('$',1) then
+			if string.byte(cht,3) == string.byte('m',1) then
+				_player_com_list[nam] = string.sub(cht,4)
+			else
+				_chatlog_add(mon,day,tim,nam,string.sub(cht,2))
+			end
+		end
+	else
+		_chatlog_add(mon,day,tim,nam,cht)
+	end
+	--</chat_list>
+	
+	local f = _FOPEN("stat\\index.html","wt")
+	
+	--<html>
+	
+	_head(f)
+	
+	------<player_list>
+	_table_begin(f,3,"Player一覧(".._PLAYERS().."人)")
+	
+	_FPUTS(f,"<tr><td>名前</td><td>最終発言</td><td>コメント</td></tr>\n")
+	
+	for i=0,_PLAYERS()-1 do
+		local lcht=_player_cht_list[_PLAYERNAME(i)]
+		if lcht == nil then lcht = " (発言なし) " end
+		
+		local pcom =_player_com_list[_PLAYERNAME(i)]
+		if pcom == nil then pcom = "" end
+		_FPUTS(f,string.format(_player_list_string,i,_PLAYERCOLOR(i),_player_arm_list[_PLAYERNAME(i)],_PLAYERNAME(i),lcht,pcom))
+	end
+	
+	_table_end(f)
+	------</player_list>
+	
+	------<log>
+	_table_begin(f,4,"Log")
+	
+	for i=1,table.getn(_chat_log) do
+		_FPUTS(f,_chat_log[i])
+	end
+	
+	_table_end(f)
+	------</log>
+	
+	_tail(f)
+	
+	--</html>
+	
+	_FCLOSE(f)
+end
+
+function OnFrame()
+	
+end
+
+------------------------------------------------------
+
+function _head(f)
+	_FPUTS(f,"<meta http-equiv=\"Content-Type\"\n")
+	_FPUTS(f,"content=\"text/html; charset=Shift_JIS\">\n")
+	_FPUTS(f,"</HEAD>\n")
+	_FPUTS(f,"<BODY leftmargin=\"100\" marginwidth=\"100\">\n")
+	_FPUTS(f,"<div align=left>\n")
+	
+	_FPUTS(f,"<h1><table summary=\"title\" width=\"60%\"><td bgcolor=\"#caccff\"><font size=5 color=\"#3366cc\"><strong>2345状況</strong></font></td></table></h1>\n")
+	_FPUTS(f,"・チャットで発言するときに最初の文字が\"$\"だとコマンド扱いとなり、ここに映らなくなります。<br>\n")
+	_FPUTS(f,"・最初の文字が\"$$\"だと\"$\"一個で始まる発言として記録されます。<br>\n")
+	_FPUTS(f,"・$$mだと、コメント残せます。<br><br>\n")
+	
+end
+
+function _tail(f)
+	_FPUTS(f,"</div>\n")
+	_FPUTS(f,"</BODY>\n")
+	_FPUTS(f,"</HTML>\n")
+end
+
+function _table_begin(f,n,t)
+	_FPUTS(f,"<table border=\"1\" cellspacing=\"0\" cellpadding=\"2\" bordercolor=\"#000000\" bordercolorlight=\"#000000\" bordercolordark=\"#000000\">\n")
+	_FPUTS(f,"<tr><td align=center colspan="..n.." bgcolor=\"#caccff\"><font color=\"#3366cc\"><strong>"..t.."</strong></font></td></tr>\n")
+end
+
+function _table_end(f)
+	_FPUTS(f,"</table><br clear=\"all\">\n")
+end
+
+------------------------------------------------------
+
+function _split_chatstring(s)
+	local spt="/  >"
+	local i
+	local lst={}
+	local mod=1
+	
+	lst[1]=""
+	
+	for i=1,string.len(s) do
+		if string.byte(s,i) == string.byte(spt,mod) then
+			mod = mod + 1
+			lst[mod]=""
+		else
+			lst[mod] = lst[mod]..string.char(string.byte(s,i))
+		end
+	end
+	
+	return lst[1],lst[2],lst[3],lst[4],lst[5]
+end
+
+function _chatlog_add(mon,day,tim,nam,cht)
+	if table.getn(_chat_log) == 30 then table.remove(_chat_log,1) end
+	table.insert(_chat_log,string.format(_chat_log_string,mon,day,tim,_player_col_list[nam],_player_arm_list[nam],nam,cht))
+	_player_cht_list[nam]=cht
+end
+
+function _xss_disable(s)
+	local sz=""
+	local i
+	
+	for i=1,string.len(s) do
+		local c = string.char(string.byte(s,i))
+		
+		if c == "<" then
+			c = "&lt;"
+		end
+		
+		if c == ">" then
+			c = "&gt;"
+		end
+		
+		if c == "&" then
+			c = "&amp;"
+		end
+		
+		if c == "\"" then
+			c = "&quot;"
+		end
+		
+		if c == "\'" then
+			c = "&apos;"
+		end
+		
+		sz = sz..c
+	end
+	
+	return sz
+end

@@ -7,5 +7,7 @@ services:
     working_dir: /home/user/orc_server
     environment:
       - HODLL=xtajit.dll
+    volumes:
+      - "./stat:/home/user/orc_server/stat:rw"
     network_mode: "host"
     command: wine orc_server.exe -sv 2345

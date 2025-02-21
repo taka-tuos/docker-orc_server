@@ -60,3 +60,8 @@ USER $USERNAME
 RUN wget https://github.com/taka-tuos/orc_server/releases/download/1.0/orc_server-1.0.zip
 RUN unzip orc_server-1.0.zip
 
+# シナリオをコピー
+ADD stat_v100.rcs /home/$USERNAME/orc_server
+
+# statフォルダを作成
+RUN mkdir stat
