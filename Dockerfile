@@ -3,7 +3,7 @@ FROM ubuntu:24.04
 
 # 必要パッケージのインストール
 RUN apt-get update
-RUN apt-get install -y tzdata wget cabextract unzip
+RUN apt-get install -y tzdata wget cabextract unzip busybox
 
 # Asia/Tokyoにセット
 RUN ln -sf /usr/share/zoneinfo/Asia/Tokyo /etc/localtime
@@ -28,7 +28,7 @@ RUN tar xvf hangover_10.0_ubuntu2404_noble_arm64.tar
 RUN apt install -y ./hangover-libqemu_10.0~noble_arm64.deb ./hangover-wine_10.0~noble_arm64.deb ./hangover-libwow64fex_10.0_arm64.deb ./hangover-libarm64ecfex_10.0_arm64.deb
 
 # ユーザーの作成
-RUN groupadd -g 1001 user && useradd -m -u 1001 -g $CGID user
+RUN groupadd -g 1001 user && useradd -m -u 1001 -g 1001 user
 
 # 切替
 USER user
@@ -42,6 +42,9 @@ RUN chmod +x winetricks
 # RUN行は1行にしておかないと動かない(一通り全部同じwineserverで行う必要があるため)
 ENV XDG_RUNTIME_DIR=/tmp
 RUN wineboot -i && wineboot -u && ./winetricks directplay && wineserver -w
+
+# winetricksのキャッシュをクリア
+RUN rm -rf /home/user/.cache/winetricks/
 
 # orc_serverのディレクトリを作成
 WORKDIR /home/user/orc_server
@@ -61,3 +64,12 @@ ADD stat_v100.rcs /home/user/orc_server
 
 # statフォルダを作成
 RUN mkdir stat
+
+# run.shをコピー
+ADD run.sh /home/user/orc_server
+
+# 実行権限を付与
+USER root
+RUN chown -R user:user /home/user/orc_server/run.sh
+USER user
+RUN chmod +x /home/user/orc_server/run.sh
