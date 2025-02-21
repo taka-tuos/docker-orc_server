@@ -38,6 +38,13 @@ WORKDIR /home/user/
 RUN wget https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks
 RUN chmod +x winetricks
 
+# winetricksのDirectXランタイムのダウンロード先がゲロ遅いので先に台湾からDLしてねじ込む
+# (元URLだと自分の環境では日によっては30KB/sぐらいしか出ない。調子のいい日でやっと数MB/s)
+# 使うときにこのURLが死んでたら適宜置き換えしたりコメントアウトしてください
+RUN mkdir -p /home/user/.cache/winetricks/directx9
+RUN wget https://ftp.ntu.edu.tw/pub/cpatch/d/directx/directx_feb2010_redist.exe
+RUN mv directx_feb2010_redist.exe /home/user/.cache/winetricks/directx9
+
 # wineの初期化、DirectPlayのインストール
 # RUN行は1行にしておかないと動かない(一通り全部同じwineserverで行う必要があるため)
 ENV XDG_RUNTIME_DIR=/tmp
