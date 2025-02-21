@@ -28,15 +28,11 @@ RUN tar xvf hangover_10.0_ubuntu2404_noble_arm64.tar
 RUN apt install -y ./hangover-libqemu_10.0~noble_arm64.deb ./hangover-wine_10.0~noble_arm64.deb ./hangover-libwow64fex_10.0_arm64.deb ./hangover-libarm64ecfex_10.0_arm64.deb
 
 # ユーザーの作成
-ARG USERNAME=user
-ARG GROUPNAME=user
-ARG CUID=1001
-ARG CGID=1001
-RUN groupadd -g $CGID $GROUPNAME && useradd -m -u $CUID -g $CGID $USERNAME
+RUN groupadd -g 1001 user && useradd -m -u 1001 -g $CGID user
 
 # 切替
-USER $USERNAME
-WORKDIR /home/$USERNAME/
+USER user
+WORKDIR /home/user/
 
 # winetricksのダウンロード
 RUN wget https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks
@@ -48,20 +44,20 @@ ENV XDG_RUNTIME_DIR=/tmp
 RUN wineboot -i && wineboot -u && ./winetricks directplay && wineserver -w
 
 # orc_serverのディレクトリを作成
-WORKDIR /home/$USERNAME/orc_server
+WORKDIR /home/user/orc_server
 
 # ↑のディレクトリがrootになってるので直す
 # buildkit?とやらを使えば直るらしいが、ここ(Dockerfile)でもdocker-compose.ymlでも指定できないっぽいので筋肉解決
 USER root
-RUN chown -R $USERNAME:$USERNAME /home/$USERNAME/orc_server 
-USER $USERNAME
+RUN chown -R user:user /home/user/orc_server 
+USER user
 
 # orc_serverを展開
 RUN wget https://github.com/taka-tuos/orc_server/releases/download/1.0/orc_server-1.0.zip
 RUN unzip orc_server-1.0.zip
 
 # シナリオをコピー
-ADD stat_v100.rcs /home/$USERNAME/orc_server
+ADD stat_v100.rcs /home/user/orc_server
 
 # statフォルダを作成
 RUN mkdir stat
